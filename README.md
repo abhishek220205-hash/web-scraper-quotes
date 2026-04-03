@@ -1,62 +1,66 @@
-**# Web Scraper - Quotes**
+**import requests**
+
+**from bs4 import BeautifulSoup**
+
+**import csv**
 
 
 
-**This project is a Python-based web scraper that extracts quotes and authors from http://quotes.toscrape.com.**
+**base\_url = "http://quotes.toscrape.com/page/{}/"**
 
 
 
-**## Features**
+**with open("quotes.csv", "w", newline="", encoding="utf-8-sig") as file:**
 
-**- Scrapes multiple pages automatically**
+&#x20;   **writer = csv.writer(file)**
 
-**- Extracts quote text and author**
-
-**- Saves data into a CSV file**
-
-**- Handles UTF-8 encoding for clean output**
+&#x20;   **writer.writerow(\["Quote", "Author"])**
 
 
 
-**## Tech Stack**
-
-**- Python**
-
-**- requests**
-
-**- BeautifulSoup**
-
-**- CSV**
+&#x20;   **page = 1**
 
 
 
-**## How to Run**
+&#x20;   **while True:**
+
+&#x20;       **url = base\_url.format(page)**
+
+&#x20;       **response = requests.get(url)**
+
+&#x20;       **response.encoding = 'utf-8'**
 
 
 
-**1. Install dependencies:**
+&#x20;       **soup = BeautifulSoup(response.text, "html.parser")**
 
-**pip install requests beautifulsoup4**
-
-
-
-**2. Run the script:**
-
-**python "python scraper.py"**
+&#x20;       **quotes = soup.find\_all("div", class\_="quote")**
 
 
 
-**## Output**
+&#x20;       **# Stop when no quotes found**
 
-**- Generates quotes.csv with 50+ quotes**
+&#x20;       **if not quotes:**
+
+&#x20;           **break**
 
 
 
-**## Future Improvements**
+&#x20;       **for q in quotes:**
 
-**- Add pagination auto-detection**
+&#x20;           **text = q.find("span", class\_="text").text**
 
-**- Store data in database**
+&#x20;           **author = q.find("small", class\_="author").text**
 
-**- Build API on top of scraper**
+&#x20;           **writer.writerow(\[text, author])**
+
+
+
+&#x20;       **print(f"Page {page} scraped...")**
+
+&#x20;       **page += 1**
+
+
+
+**print("✅ Data saved to quotes.csv")**
 

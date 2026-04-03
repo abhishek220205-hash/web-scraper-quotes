@@ -1,25 +1,46 @@
 import requests
 from bs4 import BeautifulSoup
 import csv
+import time
 
-url = "http://quotes.toscrape.com"
-response = requests.get(url)
-response.encoding = response.apparent_encoding
+base_url = "http://quotes.toscrape.com/page/{}/"
 
-soup = BeautifulSoup(response.text, "html.parser")
+headers = {
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
+}
 
-quotes = soup.find_all("div", class_="quote")
-
-with open("quotes.csv", "w", newline="", encoding="utf-8") as file:
+with open("quotes.csv", "w", newline="", encoding="utf-8-sig") as file:
     writer = csv.writer(file)
-    writer.writerow(["Quote", "Author"])
+    writer.writerow(["Quote", "Author", "Tags"])
 
-    for q in quotes:
-        text = q.find("span", class_="text").get_text(strip=True)
-        text = text.encode('utf-8').decode('utf-8')
+    page = 1
 
-        author = q.find("small", class_="author").get_text(strip=True)
+    while True:
+        url = base_url.format(page)
 
-        writer.writerow([text, author])
+        try:
+            response = requests.get(url, headers=headers)
+            response.raise_for_status()
+        except Exception as e:
+            print(f"❌ Error on page {page}: {e}")
+            break
 
-print("Data saved to quotes.csv")
+        response.encoding = 'utf-8'
+        soup = BeautifulSoup(response.text, "html.parser")
+        quotes = soup.find_all("div", class_="quote")
+
+        if not quotes:
+            break
+
+        for q in quotes:
+            text = q.find("span", class_="text").text
+            author = q.find("small", class_="author").text
+            tags = [tag.text for tag in q.find_all("a", class_="tag")]
+            writer.writerow([text, author, ", ".join(tags)])
+
+        print(f"Page {page} scraped...")
+
+        time.sleep(1)
+        page += 1
+
+print("✅ Data saved to quotes.csv")
