@@ -11,6 +11,9 @@ A Python-based web scraper that extracts quotes, authors, and tags from a websit
 * Error handling
 * User-Agent headers
 * CSV export
+* User-defined number of pages
+* Filter quotes by author or tag
+* CSV and JSON export
 
 ## Tech Stack
 
