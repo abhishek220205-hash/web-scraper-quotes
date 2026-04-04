@@ -1,46 +1,48 @@
 import requests
 from bs4 import BeautifulSoup
 import csv
-import time
+import json
 
 base_url = "http://quotes.toscrape.com/page/{}/"
 
 headers = {
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
+    "User-Agent": "Mozilla/5.0"
 }
 
+num_pages = int(input("Enter number of pages to scrape: "))
+
+data = []
+
+for page in range(1, num_pages + 1):
+    url = base_url.format(page)
+    response = requests.get(url, headers=headers)
+
+    if response.status_code != 200:
+        print(f"Failed to fetch page {page}")
+        continue
+
+    soup = BeautifulSoup(response.text, "html.parser")
+    quotes = soup.find_all("div", class_="quote")
+
+    for q in quotes:
+        text = q.find("span", class_="text").text
+        author = q.find("small", class_="author").text
+        tags = [tag.text for tag in q.find_all("a", class_="tag")]
+
+        data.append({
+            "quote": text,
+            "author": author,
+            "tags": ", ".join(tags)
+        })
+
+    print(f"Page {page} scraped...")
+
 with open("quotes.csv", "w", newline="", encoding="utf-8-sig") as file:
-    writer = csv.writer(file)
-    writer.writerow(["Quote", "Author", "Tags"])
+    writer = csv.DictWriter(file, fieldnames=["quote", "author", "tags"])
+    writer.writeheader()
+    writer.writerows(data)
 
-    page = 1
+with open("quotes.json", "w", encoding="utf-8") as file:
+    json.dump(data, file, indent=4)
 
-    while True:
-        url = base_url.format(page)
-
-        try:
-            response = requests.get(url, headers=headers)
-            response.raise_for_status()
-        except Exception as e:
-            print(f"❌ Error on page {page}: {e}")
-            break
-
-        response.encoding = 'utf-8'
-        soup = BeautifulSoup(response.text, "html.parser")
-        quotes = soup.find_all("div", class_="quote")
-
-        if not quotes:
-            break
-
-        for q in quotes:
-            text = q.find("span", class_="text").text
-            author = q.find("small", class_="author").text
-            tags = [tag.text for tag in q.find_all("a", class_="tag")]
-            writer.writerow([text, author, ", ".join(tags)])
-
-        print(f"Page {page} scraped...")
-
-        time.sleep(1)
-        page += 1
-
-print("✅ Data saved to quotes.csv")
+print("✅ Data saved to quotes.csv and quotes.json")
