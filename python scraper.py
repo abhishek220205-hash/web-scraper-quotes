@@ -11,6 +11,10 @@ headers = {
 
 num_pages = int(input("Enter number of pages to scrape: "))
 
+# 👉 Filter input
+filter_type = input("Filter by 'author', 'tag', or press Enter for none: ").lower()
+filter_value = input("Enter filter value (or leave blank): ").lower()
+
 data = []
 
 for page in range(1, num_pages + 1):
@@ -29,6 +33,15 @@ for page in range(1, num_pages + 1):
         author = q.find("small", class_="author").text
         tags = [tag.text for tag in q.find_all("a", class_="tag")]
 
+        # 👉 Apply filter
+        if filter_type == "author" and filter_value:
+            if filter_value not in author.lower():
+                continue
+
+        if filter_type == "tag" and filter_value:
+            if not any(filter_value in tag.lower() for tag in tags):
+                continue
+
         data.append({
             "quote": text,
             "author": author,
@@ -37,12 +50,14 @@ for page in range(1, num_pages + 1):
 
     print(f"Page {page} scraped...")
 
+# 👉 Save CSV
 with open("quotes.csv", "w", newline="", encoding="utf-8-sig") as file:
     writer = csv.DictWriter(file, fieldnames=["quote", "author", "tags"])
     writer.writeheader()
     writer.writerows(data)
 
+# 👉 Save JSON
 with open("quotes.json", "w", encoding="utf-8") as file:
     json.dump(data, file, indent=4)
 
-print("✅ Data saved to quotes.csv and quotes.json")
+print(f"✅ Done! {len(data)} filtered quotes saved.")
